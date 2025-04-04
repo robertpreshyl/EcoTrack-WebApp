@@ -21,7 +21,19 @@ We've reached our first stable version with a complete UI overhaul featuring a m
 ## Screenshots
 
 ### Landing Page
-![Landing Page](public/images/screenshots/landing.png)
+![Hero Section](public/images/screenshots/landing-hero.png)
+
+#### How It Works
+![How It Works](public/images/screenshots/landing-how-it-works.png)
+
+#### Testimonials
+![Testimonials](public/images/screenshots/landing-testimonials.png)
+
+#### Features
+![Features](public/images/screenshots/landing-features.png)
+
+#### Call to Action
+![Call to Action](public/images/screenshots/landing-cta.png)
 
 ### Dashboard
 ![Dashboard](public/images/screenshots/dashboard.png)
