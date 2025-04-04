@@ -226,11 +226,15 @@ const Calculator: React.FC<CalculatorProps> = ({ user, onComplete, t }) => {
         footprintId = energyResult.footprint_id;
       }
       
-      // Skip transport API calls for now to avoid type errors
-      /* Commented out to avoid errors until we have proper data
       // Add transport details if available
-      if (transportData.carUsage > 0 && transportData.vehicle) {
+      if (transportData.carUsage > 0) {
         try {
+          // Create a default vehicle if none selected
+          const vehicle = transportData.vehicle || {
+            make: 'average',
+            model: 'midsize'
+          };
+          
           const transportResponse = await fetch('/api/transport', {
             method: 'POST',
             headers: {
@@ -240,8 +244,8 @@ const Calculator: React.FC<CalculatorProps> = ({ user, onComplete, t }) => {
               transport_type: 'vehicle',
               distance_value: transportData.carUsage * 4, // Monthly estimate
               distance_unit: 'km',
-              vehicle_make: transportData.vehicle.make,
-              vehicle_model: transportData.vehicle.model
+              vehicle_make: vehicle.make,
+              vehicle_model: vehicle.model
             }),
           });
           
@@ -299,7 +303,42 @@ const Calculator: React.FC<CalculatorProps> = ({ user, onComplete, t }) => {
           }
         }
       }
-      */
+      
+      // Save the complete footprint calculation result to ensure it shows on the dashboard
+      await fetch('/api/footprint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: {
+            country,
+            transport: {
+              car: {
+                distance_km_week: transportData.carUsage,
+                fuel: transportData.vehicle?.make === 'Tesla' ? 'electric' : 'gasoline'
+              },
+              flights: {
+                short_haul_annual: transportData.shortHaulFlights,
+                long_haul_annual: transportData.longHaulFlights
+              }
+            },
+            energy: {
+              electricity_kwh_month: energyData.electricityUsage,
+              household_size: energyData.householdSize
+            },
+            diet: {
+              type: dietData.redMeatConsumption > 3 ? 'meat_heavy' : 
+                   dietData.redMeatConsumption > 0 ? 'omnivore' : 
+                   dietData.fishConsumption > 0 ? 'pescetarian' : 
+                   dietData.dairyConsumption > 0 ? 'vegetarian' : 'vegan'
+            },
+            housing: {
+              size_sqm: 75
+            }
+          }
+        }),
+      });
       
       // On success, call the onComplete handler
       if (onComplete) {

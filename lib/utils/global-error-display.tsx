@@ -141,9 +141,16 @@ export function GlobalErrorDisplay() {
 
   if (errors.length === 0) return null;
 
+  // Ensure each error has a valid ID for React keys
+  const errorsWithValidKeys = errors.map(error => ({
+    ...error,
+    // If id is missing for some reason, generate a fallback
+    id: error.id || `error-${error.timestamp}-${Math.random().toString(36).substr(2, 9)}`
+  }));
+
   return (
     <div className="fixed bottom-0 right-0 m-4 z-50 max-w-md max-h-[80vh] overflow-y-auto">
-      {errors.map(error => (
+      {errorsWithValidKeys.map(error => (
         <div key={error.id} className="bg-red-50 p-4 rounded-lg shadow-lg border border-red-200 mb-2">
           <div className="flex justify-between items-start">
             <div>

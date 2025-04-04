@@ -57,20 +57,36 @@ interface Achievement {
 
 export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
   // State for UI
+  const [activeTab, setActiveTab] = useState('stats');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [footprints, setFootprints] = useState<FootprintRecord[]>([]);
+  const [devices, setDevices] = useState<DeviceEmission[]>([]);
+  const [deviceError, setDeviceError] = useState<Error | null>(null);
+  const [footprintError, setFootprintError] = useState<Error | null>(null);
   const [activeRoom, setActiveRoom] = useState<string>("All Rooms");
-  const [activeTab, setActiveTab] = useState<string>("devices"); // devices, history, settings
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
   });
   
-  // State for calculator modal
-  const [showCalculator, setShowCalculator] = useState(false);
+  // State for charts and statistics
+  const [emissionStats, setEmissionStats] = useState({
+    current: 0,
+    average: 0,
+    total: 0
+  });
+  const [breakdownData, setBreakdownData] = useState<any>(null);
+  const [historyData, setHistoryData] = useState<any>(null);
+  
+  // Function to fetch recent summary data
+  const fetchRecentSummary = async () => {
+    // For now, this is a placeholder function
+    // It would typically fetch additional summary data for the dashboard
+    console.log("Fetching recent summary data");
+  };
   
   // State for data
-  const [isLoading, setIsLoading] = useState(true);
-  const [footprints, setFootprints] = useState<FootprintRecord[]>([]);
-  const [devices, setDevices] = useState<DeviceEmission[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([
     { id: 'living-room', name: 'Living Room', icon: '🏠', selected: false },
@@ -122,10 +138,6 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
     'Consider carbon offset programs'
   ]);
 
-  // State for errors
-  const [deviceError, setDeviceError] = useState<Error | null>(null);
-  const [footprintError, setFootprintError] = useState<Error | null>(null);
-
   // Add state for the Add Device modal
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
 
@@ -164,6 +176,16 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
     return () => clearTimeout(timer);
   }, [user.id]); // Added fetchDevices to ensure it's called on mount
 
+  // Component mount effect
+  useEffect(() => {
+    // Fetch devices and footprints
+    fetchDevices();
+    fetchFootprints();
+    
+    // Fetch other data in the background
+    fetchRecentSummary();
+  }, [user.id]);
+
   // Fetch footprints
   const fetchFootprints = async () => {
     setFootprintError(null);
@@ -187,21 +209,23 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
 
       if (error) {
         throw error;
-      } else {
-        setFootprints(data || []);
+      } else if (data && data.length > 0) {
+        console.log("Loaded footprints from Supabase:", data.length);
+        setFootprints(data);
+        
+        // Process footprint data for charts
+        processFootprintData(data);
         
         // Update achievements based on footprints
         let updatedAchievements = [...achievements];
         
         // First Step achievement
-        if (data && data.length > 0) {
-          updatedAchievements = updatedAchievements.map(a => 
-            a.id === 'first-step' ? {...a, earned: true} : a
-          );
-        }
+        updatedAchievements = updatedAchievements.map(a => 
+          a.id === 'first-step' ? {...a, earned: true} : a
+        );
         
         // Regular Tracker achievement
-        const calculations = data ? data.length : 0;
+        const calculations = data.length;
         updatedAchievements = updatedAchievements.map(a => 
           a.id === 'regular-tracker' ? {
             ...a, 
@@ -211,16 +235,122 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
         );
         
         // Low Impact achievement
-        const hasLowImpact = data ? data.some(f => f.total_co2e_kg < 600) : false;
+        const hasLowImpact = data.some(f => f.total_co2e_kg < 600);
         updatedAchievements = updatedAchievements.map(a => 
           a.id === 'low-impact' ? {...a, earned: hasLowImpact} : a
         );
         
         setAchievements(updatedAchievements);
+      } else {
+        console.log("No footprints found in database, initializing sample data");
+        await initializeSampleFootprint();
+        // Fetch again after initialization
+        fetchFootprints();
       }
     } catch (err) {
       const appError = logError(err, 'DashboardRedesign', 'fetchFootprints', { userId: user.id });
       setFootprintError(appError);
+    }
+  };
+  
+  // Process footprint data for charts and statistics
+  const processFootprintData = (data: FootprintRecord[]) => {
+    if (!data || data.length === 0) return;
+    
+    try {
+      // Calculate total emissions and average
+      const totalEmissions = data.reduce((sum, record) => sum + record.total_co2e_kg, 0);
+      const averageEmission = totalEmissions / data.length;
+      
+      // Update emission statistics
+      setEmissionStats({
+        current: data[0].total_co2e_kg,
+        average: averageEmission,
+        total: totalEmissions
+      });
+      
+      // Generate data for charts
+      // Process category breakdown for the most recent footprint
+      const latestFootprint = data[0];
+      if (latestFootprint.footprint_details && latestFootprint.footprint_details.length > 0) {
+        // Group by category
+        const categoryTotals: Record<string, number> = {};
+        latestFootprint.footprint_details.forEach(detail => {
+          if (!categoryTotals[detail.category]) {
+            categoryTotals[detail.category] = 0;
+          }
+          categoryTotals[detail.category] += detail.value;
+        });
+        
+        // Update chart data
+        const chartLabels = Object.keys(categoryTotals).map(cat => 
+          cat.charAt(0).toUpperCase() + cat.slice(1)
+        );
+        const chartValues = Object.values(categoryTotals);
+        
+        // Make sure we have entries in the order: Transport, Energy, Diet
+        const standardCategories = ['transport', 'energy', 'diet'];
+        const sortedLabels: string[] = [];
+        const sortedValues: number[] = [];
+        
+        standardCategories.forEach(cat => {
+          const index = chartLabels.findIndex(
+            label => label.toLowerCase() === cat
+          );
+          
+          if (index >= 0) {
+            sortedLabels.push(chartLabels[index]);
+            sortedValues.push(chartValues[index]);
+          } else {
+            // If category doesn't exist, add it with zero value
+            sortedLabels.push(cat.charAt(0).toUpperCase() + cat.slice(1));
+            sortedValues.push(0);
+          }
+        });
+        
+        // Set the breakdown chart data
+        setBreakdownData({
+          labels: sortedLabels,
+          datasets: [
+            {
+              data: sortedValues,
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+              ],
+              borderWidth: 1,
+            },
+          ],
+        });
+      }
+      
+      // If we have multiple entries, create history chart
+      if (data.length > 1) {
+        // Take up to 10 most recent entries and reverse for chronological order
+        const recentEntries = data.slice(0, 10).reverse();
+        
+        setHistoryData({
+          labels: recentEntries.map(entry => {
+            // Format the date
+            const date = new Date(entry.created_at);
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          }),
+          datasets: [
+            {
+              label: 'CO₂e (kg)',
+              data: recentEntries.map(entry => entry.total_co2e_kg),
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        });
+      }
+      
+    } catch (error) {
+      console.error("Error processing footprint data:", error);
     }
   };
 
@@ -270,26 +400,177 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
           room: device.room
         }));
         
-        // Set both real devices and simulated devices with different room to ensure we have a good variety
+        // Always include demo room with simulated devices for consistency
         const modifiedSimulatedDevices = simulatedDevices.map(device => ({
           ...device,
-          room: 'demo-room', // Put simulated devices in a separate demo room
+          room: 'Demo Room', // Put simulated devices in a separate demo room
           id: `sim-${device.id}` // Add prefix to avoid ID collision
         }));
         
         // Combine both sets of devices, with real devices appearing first
         setDevices([...mappedDevices, ...modifiedSimulatedDevices]);
       } else {
-        console.log("No devices found in Supabase, loading simulated devices");
-        // If no devices found, use simulated devices
-        setDevices(simulatedDevices);
+        // If no devices found, initialize the user with default devices
+        console.log("No devices found in Supabase, initializing with default devices");
+        await initializeUserDevices(simulatedDevices);
       }
-    } catch (err) {
-      const appError = logError(err, 'DashboardRedesign', 'fetchDevices', { userId: user.id });
-      setDeviceError(appError);
-      // If there's an error, still load simulated devices
-      const simulatedDevices = getSimulatedDevices();
-      setDevices(simulatedDevices);
+    } catch (error) {
+      console.error("Error fetching devices:", error);
+      setDeviceError(error instanceof Error ? error : new Error('Failed to fetch devices'));
+      // Use simulated devices as fallback
+      setDevices(getSimulatedDevices());
+    }
+  };
+
+  // Initialize new user with default devices and sample footprint
+  const initializeUserDevices = async (simulatedDevices: DeviceEmission[]) => {
+    try {
+      const supabase = createBrowserSupabaseClient();
+      
+      // Filter out a subset of devices to save as real devices (not all)
+      const defaultDevices = simulatedDevices
+        .filter((_, index) => index < 3) // Take first 3 devices
+        .map(device => ({
+          user_id: user.id,
+          name: device.name,
+          brand: device.brand || 'Generic',
+          category: device.category,
+          subcategory: device.subcategory,
+          energy_kwh: device.energy_kwh,
+          co2_kg: device.co2_kg,
+          usage_time: device.usage_time,
+          cost_estimate: device.cost_estimate,
+          is_on: device.isOn,
+          image_path: device.image,
+          room: 'Living Room' // Default room for initial devices
+        }));
+      
+      // Insert the default devices
+      const { data, error } = await supabase
+        .from('devices')
+        .insert(defaultDevices)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Map inserted devices to our interface
+      const insertedDevices: DeviceEmission[] = data?.map(device => ({
+        id: device.id,
+        name: device.name,
+        brand: device.brand,
+        category: device.category,
+        subcategory: device.subcategory,
+        energy_kwh: device.energy_kwh,
+        co2_kg: device.co2_kg,
+        usage_time: device.usage_time,
+        cost_estimate: device.cost_estimate,
+        isOn: device.is_on,
+        image: device.image_path,
+        room: device.room
+      })) || [];
+      
+      // Create demo devices in a separate room
+      const demoDevices = simulatedDevices.map(device => ({
+        ...device,
+        room: 'Demo Room',
+        id: `sim-${device.id}`
+      }));
+      
+      // Initialize sample footprint data for new users
+      await initializeSampleFootprint();
+      
+      // Set devices in state with both real and demo
+      setDevices([...insertedDevices, ...demoDevices]);
+      
+    } catch (error) {
+      console.error("Error initializing user devices:", error);
+      // Fallback to simulated devices only
+      setDevices(getSimulatedDevices());
+    }
+  };
+  
+  // Initialize sample footprint for new users
+  const initializeSampleFootprint = async () => {
+    try {
+      const supabase = createBrowserSupabaseClient();
+      
+      // Check if user already has footprints
+      const { data: existingFootprints, error: checkError } = await supabase
+        .from('footprints')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      if (checkError) {
+        throw checkError;
+      }
+      
+      // Only create sample footprint if user has none
+      if (!existingFootprints || existingFootprints.length === 0) {
+        // Create a sample footprint
+        const { data: footprint, error: footprintError } = await supabase
+          .from('footprints')
+          .insert({
+            user_id: user.id,
+            total_co2e_kg: 325.5,
+            country_code: 'FI',
+            calculation_version: '1.0'
+          })
+          .select()
+          .single();
+        
+        if (footprintError) {
+          throw footprintError;
+        }
+        
+        // Add footprint details
+        const { error: detailsError } = await supabase
+          .from('footprint_details')
+          .insert([
+            {
+              footprint_id: footprint.id,
+              category: 'energy',
+              subcategory: 'electricity',
+              value: 150.2,
+              raw_input: JSON.stringify({ electricity_value: 300, electricity_unit: 'kwh' })
+            },
+            {
+              footprint_id: footprint.id,
+              category: 'transport',
+              subcategory: 'vehicle',
+              value: 125.3,
+              raw_input: JSON.stringify({ distance_value: 500, distance_unit: 'km' })
+            },
+            {
+              footprint_id: footprint.id,
+              category: 'diet',
+              subcategory: 'omnivore',
+              value: 50.0,
+              raw_input: JSON.stringify({ diet_type: 'omnivore' })
+            }
+          ]);
+        
+        if (detailsError) {
+          throw detailsError;
+        }
+        
+        // Initialize achievements for new user
+        const { error: achievementsError } = await supabase
+          .from('user_achievements')
+          .insert({
+            user_id: user.id,
+            achievement_id: 'first-step',
+            earned_at: new Date().toISOString()
+          });
+          
+        if (achievementsError) {
+          console.error("Error initializing achievements:", achievementsError);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing sample footprint:", error);
     }
   };
 
