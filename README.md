@@ -35,8 +35,9 @@ We've reached our first stable version with a complete UI overhaul featuring a m
 #### Call to Action
 ![Call to Action](public/images/screenshots/landing-cta.png)
 
-### Dashboard
-![Dashboard](public/images/screenshots/dashboard.png)
+### Dashboard Views
+![Dashboard Overview](public/images/screenshots/dashboard1.png)
+![Dashboard Analytics](public/images/screenshots/dashboard2.png)
 
 ## Technology Stack
 

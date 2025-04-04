@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Session, User } from '@supabase/supabase-js';
+import React from 'react';
 
 type UserContextType = {
   session: Session | null;
@@ -165,7 +166,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Use a simple React element to prevent any list rendering issues
   return (
     <UserContext.Provider value={{ session, user, isLoading, signOut }}>
-      {children}
+      {React.Children.map(children, (child, index) => {
+        // Add a key if it's a valid React element
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { key: `user-context-child-${index}` });
+        }
+        return child;
+      })}
     </UserContext.Provider>
   );
 }

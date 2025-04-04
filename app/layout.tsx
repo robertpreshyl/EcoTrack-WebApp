@@ -6,6 +6,7 @@ import { UserProvider } from "@/lib/context/UserContext";
 import { useEffect } from "react";
 import { setupGlobalErrorListeners } from "@/lib/utils/global-error-display";
 import { GlobalErrorDisplay } from "@/lib/utils/global-error-display";
+import React from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,8 +56,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UserProvider>
-          {children}
-          <GlobalErrorDisplay />
+          <React.Fragment key="layout-content">
+            {children}
+            <GlobalErrorDisplay key="global-error-display" />
+          </React.Fragment>
         </UserProvider>
       </body>
     </html>
