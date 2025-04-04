@@ -1,5 +1,5 @@
 # EcoTrack Project Documentation
-*Updated: April 2025*
+*Updated: July 2023*
 
 ## 1. Executive Summary
 
@@ -7,7 +7,7 @@
 
 **Mission:** To empower individuals with localized, real-time carbon footprint tracking, actionable insights, and engaging features to drive eco-friendly behaviors, starting in Finland before expanding across Europe.
 
-**Current Status:** MVP development stage with functional calculator UI and simulated calculations. Pending implementation of Supabase authentication and Carbon Interface API integration.
+**Current Status:** Advanced MVP development with modern UI design, functional authentication flow, and responsive dashboard. Supabase integration complete for authentication and user management. We've implemented a modern light color scheme across all pages for a consistent user experience.
 
 ## 2. Business Overview
 
@@ -40,10 +40,13 @@
 - ✅ Initial UI/UX design for calculator and dashboard
 - ✅ Basic form for footprint inputs (transport, energy, diet)
 - ✅ Multilingual support (Finnish/English)
-- ⬜ User authentication with Supabase
+- ✅ User authentication with Supabase
+- ✅ Data storage in Supabase PostgreSQL
+- ✅ Complete UI redesign with modern light theme
+- ✅ Mobile-responsive design for all components
+- ✅ User profile and session management
 - ⬜ Integration with Carbon Interface API for calculations
-- ⬜ Data storage in Supabase PostgreSQL
-- ⬜ Basic user dashboard
+- ⬜ Enhanced user dashboard with data visualization
 
 ### 3.2 Phase 2: Enhancement (Months 4-6)
 - Premium subscription implementation with Stripe
@@ -70,37 +73,49 @@
 - **Frontend:** Next.js (React) with TypeScript and Tailwind CSS
 - **Backend:** Supabase (Edge Functions, Auth, PostgreSQL)
 - **APIs:** Carbon Interface API (core), OpenAI API (future)
-- **Payment Processing:** Stripe
+- **Payment Processing:** Stripe (future)
 - **Hosting:** Vercel (frontend), Supabase (backend)
 
 ### 4.2 Application Structure
 ```
 ecotrack-app/
 ├── app/                      # Next.js app directory
-│   ├── api/                  # API routes (to be implemented)
+│   ├── api/                  # API routes for auth and data
 │   ├── components/           # Shared React components
 │   ├── dashboard/            # Dashboard pages
 │   │   └── page.tsx
 │   ├── calculator/           # Calculator pages
 │   │   └── page.tsx
-│   ├── auth/                 # Authentication pages
+│   ├── login/                # Login page
+│   │   └── page.tsx
+│   ├── signup/               # Signup page
 │   │   └── page.tsx
 │   ├── layout.tsx            # Root layout
-│   └── page.tsx              # Homepage
+│   └── page.tsx              # Homepage/Landing page
 ├── lib/                      # Shared utilities
+│   ├── context/              # React context providers
 │   ├── supabase/             # Supabase client
-│   ├── carbon-api/           # Carbon Interface API utilities
+│   ├── services/             # Service layers
+│   ├── utils/                # Utility functions
 │   └── types/                # TypeScript types
 ├── public/                   # Static assets
+│   └── images/               # Images and icons
 └── config files              # Next.js, TypeScript, etc.
 ```
 
-### 4.3 Database Schema (Planned)
+### 4.3 Database Schema (Implemented)
 ```
-users
+users (Supabase Auth)
   id: uuid PK
   email: text
   created_at: timestamp
+  
+profiles
+  id: uuid PK (references auth.users.id)
+  full_name: text
+  email: text
+  language: text
+  country: text
   
 footprints
   id: uuid PK
@@ -115,64 +130,58 @@ footprint_details
   subcategory: text
   value: numeric
   
-user_achievements
+devices
   id: uuid PK
   user_id: uuid FK(users.id)
-  achievement_id: text
-  earned_at: timestamp
-  
-subscriptions
-  id: uuid PK
-  user_id: uuid FK(users.id)
-  stripe_subscription_id: text
-  status: text
-  tier: text
-  expires_at: timestamp
+  name: text
+  category: text
+  subcategory: text
+  energy_kwh: numeric
+  co2_kg: numeric
+  is_on: boolean
 ```
 
 ## 5. Current UI Components
 
-### 5.1 Main Application Layout
-- Header with app name, language selector, and country selector
-- Authentication section (login/signup)
-- Dashboard area (for logged-in users)
-- Calculator form
-- Results display
-- Footer
+### 5.1 Application Pages
+- **Landing Page**: Modern, responsive landing page with feature showcase
+- **Authentication Pages**: Login and signup pages with Supabase integration
+- **Dashboard**: User dashboard with device management and carbon tracking
+- **Carbon Calculator**: Interface for calculating carbon emissions
 
-### 5.2 Calculator Form
-Structured with these main sections:
-- Transport (car, flights, motorbike, public transport)
-- Home Energy (electricity, heating fuels, household size)
-- Diet (type selection)
-- Future: Waste & Consumption sections
+### 5.2 Design System
+- Light color scheme with teal/blue accents
+- Responsive design for mobile, tablet, and desktop
+- Consistent component styling across all pages
+- Interactive elements with hover/focus states
 
-### 5.3 Dashboard (to be expanded)
-Current simulated features:
-- Latest footprint display
-- Placeholder for historical data
-- Coming soon section for Phase 2 features
+### 5.3 Dashboard Features
+- User profile display
+- Device management with real-time toggle functionality
+- Carbon footprint visualization
+- Tips carousel with eco-friendly recommendations
 
 ## 6. Key Integrations (Prioritized)
 
-### 6.1 Critical Path (MVP)
-- **Supabase Authentication** - For user management
-- **Carbon Interface API** - For accurate calculation of footprints
-- **Supabase Database** - For storing user data and calculation results
+### 6.1 Completed Integrations
+- **Supabase Authentication** - Implemented for user management
+- **Supabase Database** - Storing user data and calculation results
 
-### 6.2 Phase 2 Priorities
+### 6.2 Critical Path (Current Focus)
+- **Carbon Interface API** - For accurate calculation of footprints
+- **Data Visualization Library** - For enhanced dashboard charts
+
+### 6.3 Phase 2 Priorities
 - **Stripe API** - For handling premium subscriptions
-- **Charting Library** - For visualizing historical data
 - **OpenAI API (optional)** - For personalized reduction tips
 
 ## 7. Implementation Priorities
 
-1. **Complete Authentication** - Implement proper Supabase authentication to replace the current simulation
-2. **API Integration** - Connect to Carbon Interface API for real calculations
-3. **Data Persistence** - Store user information and calculation history
-4. **Localization Refinement** - Ensure Finnish data factors are accurate
-5. **User Testing** - Gather initial feedback from Finnish users
-6. **UI Polish** - Refine interface based on feedback
+1. **Complete API Integration** - Connect to Carbon Interface API for real calculations
+2. **Dashboard Enhancement** - Improve data visualization and user experience
+3. **Data Analysis Features** - Add historical tracking and comparison tools
+4. **Performance Optimization** - Audit and improve application performance
+5. **User Feedback Integration** - Gather and incorporate user feedback
 
 ## 8. Development Guidelines
 
@@ -181,22 +190,20 @@ Current simulated features:
 - Implement proper error handling for API calls
 - Use "use client" directive for components using React hooks
 - Monitor API usage carefully to control costs
-- Build with mobile responsiveness in mind
+- Maintain mobile responsiveness in all new features
 - Implement proper loading states and error handling
 
-## 9. Risks & Considerations
+## 9. Challenges & Solutions
 
-- **API Costs** - Carbon Interface API pricing is higher than initially estimated
-- **Market Adoption** - Need to validate willingness to pay for premium features
-- **Technical Debt** - Current implementation needs TypeScript refinement
-- **Authentication** - Must implement proper auth flow with Supabase
-- **Calculation Accuracy** - Ensure that Finnish-specific factors are properly applied
+- **Authentication Flow**: Implemented robust cookie-based auth with Supabase
+- **Responsive Design**: Created a flexible layout system that adapts to all screen sizes
+- **UI Consistency**: Established a consistent design system across all pages
+- **Type Safety**: Enhanced TypeScript implementation for better error prevention
 
 ## 10. Next Steps
 
-1. Implement Supabase authentication
-2. Set up proper database schema
-3. Integrate with Carbon Interface API
-4. Implement data persistence
-5. Fix TypeScript errors in current implementation
-6. Deploy MVP for initial user testing
+1. Integrate with Carbon Interface API for accurate emissions calculations
+2. Enhance dashboard with interactive data visualizations
+3. Implement user feedback system
+4. Begin user testing with Finnish early adopters
+5. Optimize performance and address any remaining UI issues
