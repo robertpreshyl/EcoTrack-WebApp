@@ -25,6 +25,24 @@ export default function RootLayout({
   // Set up global error handling
   useEffect(() => {
     setupGlobalErrorListeners();
+    
+    // Clear any corrupted localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        // Check for localStorage keys that might be corrupted
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.auth.')) {
+            const value = localStorage.getItem(key);
+            if (value === 'undefined' || value === 'null' || (value && value.startsWith('b'))) {
+              console.log('Removing corrupted localStorage item:', key);
+              localStorage.removeItem(key);
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Error cleaning localStorage:', e);
+      }
+    }
   }, []);
 
   return (

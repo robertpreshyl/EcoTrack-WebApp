@@ -35,9 +35,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create a Supabase client - Fixed by awaiting cookies()
+    // Create a Supabase client - Fixed to properly handle cookies
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();

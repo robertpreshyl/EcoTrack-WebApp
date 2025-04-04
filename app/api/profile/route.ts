@@ -9,8 +9,11 @@ import type { NextRequest } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Create a Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Create a Supabase client with proper cookie handling
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
     
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();
@@ -56,8 +59,11 @@ export async function PUT(request: NextRequest) {
     // Get the request body
     const profileData = await request.json();
     
-    // Create a Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Create a Supabase client with proper cookie handling
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
     
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();

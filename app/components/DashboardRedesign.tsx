@@ -988,29 +988,30 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
   // Make sure the loading screen doesn't contain any hooks or components that use hooks
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-slate-50 to-blue-50">
         <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-teal-500 to-blue-500 mb-4 mx-auto animate-spin"></div>
+          <p className="text-slate-600">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
-  
+
   // Get the latest footprint if available
   const latestFootprint = footprints.length > 0 ? footprints[0] : null;
 
+  // If authenticated, show the dashboard
   return (
     <ErrorBoundary component="DashboardRedesign">
-      <div className="bg-gray-50 min-h-screen pb-16">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50 text-slate-800">
         {/* Calculator Modal */}
         {showCalculator && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/75 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="p-1">
                 <button 
                   onClick={() => setShowCalculator(false)}
-                  className="ml-auto block p-2 text-gray-500 hover:text-gray-700"
+                  className="ml-auto block p-2 text-slate-500 hover:text-slate-700"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1025,413 +1026,577 @@ export default function DashboardRedesign({ user, onLogout }: DashboardProps) {
             </div>
           </div>
         )}
-
-        {/* Top Navigation */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="container mx-auto py-3 px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <div className="text-2xl font-bold flex items-center text-gray-800">
-                  <span className="text-green-500 mr-1">E</span>coTrack
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
+        
+        {/* Add Device Modal */}
+        {showAddDeviceModal && (
+          <div className="fixed inset-0 bg-slate-900/75 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+              <div className="flex justify-between items-center px-4 py-3 border-b border-slate-200">
+                <h3 className="text-lg font-medium text-slate-800">Add New Device</h3>
                 <button 
-                  onClick={() => setShowCalculator(true)}
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  onClick={() => setShowAddDeviceModal(false)}
+                  className="text-slate-500 hover:text-slate-700"
                 >
-                  Calculate Footprint
-                </button>
-                <button
-                  onClick={() => setShowAddDeviceModal(true)}
-                  className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm transition-colors"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Add device
                 </button>
+              </div>
+              <AddDeviceModal
+                isOpen={showAddDeviceModal}
+                onClose={() => setShowAddDeviceModal(false)}
+                onDeviceAdded={handleDeviceAdded}
+                userId={user.id}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Top navigation bar */}
+        <header className="bg-white shadow-sm border-b border-slate-200">
+          <div className="container mx-auto px-4 py-4 sm:px-6 flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-blue-500">
+                EcoTrack
+              </h1>
+              <span className="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                Dashboard
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button 
+                className="hidden md:inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-teal-700 bg-teal-50 hover:bg-teal-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                onClick={() => setShowCalculator(true)}
+              >
+                Calculate Footprint
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => document.getElementById('user-menu')?.classList.toggle('hidden')}
+                  className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center text-white">
+                    {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                  </div>
+                </button>
+                
+                <div id="user-menu" className="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10" role="menu">
+                  <button 
+                    className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100" 
+                    role="menuitem"
+                    onClick={onLogout}
+                  >
+                    Sign out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </header>
-
-        {/* Main Content */}
-        <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-          {/* Show footprint errors if any */}
-          {footprintError && (
-            <div className="mb-6">
-              <ErrorMessage 
-                error={footprintError} 
-                onRetry={fetchFootprints} 
-              />
-            </div>
-          )}
-
-          {/* Dashboard Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            {/* Latest Footprint Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 -mt-8 -mr-8 bg-green-100 rounded-full"></div>
-              <div className="relative">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Latest Footprint</h2>
-                {latestFootprint ? (
-                  <div>
-                    <div className="text-3xl font-bold text-green-600 mb-2">
-                      {latestFootprint.total_co2e_kg} kg CO₂e
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(latestFootprint.created_at).toLocaleDateString()}
-                    </div>
-                    <button 
-                      onClick={() => setShowCalculator(true)}
-                      className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-                    >
-                      Calculate Again
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-4">
-                    <p className="text-gray-500 mb-4">No footprint data yet. Calculate your first footprint!</p>
-                    <button 
-                      onClick={() => setShowCalculator(true)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-                    >
-                      Calculate Now
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Your Stats Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 -mt-8 -mr-8 bg-blue-100 rounded-full"></div>
-              <div className="relative">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Stats</h2>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Total Calculations</div>
-                    <div className="text-2xl font-bold text-gray-900">{userStats.totalCalculations}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Average Footprint</div>
-                    <div className="text-2xl font-bold text-gray-900">{userStats.averageFootprint} kg CO₂e</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Tips Card with Carousel */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Tips to Improve</h2>
-              <TipsCarousel tips={tips} />
-            </div>
+        
+        {/* Main content */}
+        <div className="container mx-auto px-4 py-6 sm:px-6">
+          {/* Mobile menu */}
+          <div className="mb-6 md:hidden">
+            <select 
+              className="block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+            >
+              <option value="stats">Dashboard</option>
+              <option value="devices">Devices</option>
+              <option value="tips">Tips</option>
+              <option value="profile">Profile</option>
+            </select>
           </div>
           
-          {/* Achievements Section */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Achievements</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {achievements.map(achievement => (
-                <div 
-                  key={achievement.id} 
-                  className={`p-4 rounded-lg border ${achievement.earned 
-                    ? 'border-green-200 bg-green-50' 
-                    : 'border-gray-200 bg-gray-50 opacity-60'}`}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="text-4xl mb-2">{achievement.icon}</div>
-                    <div className="font-medium text-gray-900">{achievement.name}</div>
-                    <div className="text-sm text-gray-500">{achievement.description}</div>
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Desktop sidebar */}
+            <div className="hidden md:block w-64 shrink-0">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-4 py-5">
+                  <div className="flex flex-col items-center">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-r from-teal-400 to-blue-500 flex items-center justify-center text-white text-xl font-bold">
+                      {user.email ? user.email.charAt(0).toUpperCase() : "U"}
+                    </div>
+                    <div className="mt-2 text-center">
+                      <h3 className="text-lg font-medium text-slate-900 truncate">
+                        {user.user_metadata?.full_name || 'EcoTrack User'}
+                      </h3>
+                      <p className="text-sm text-slate-500 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-slate-200">
+                  <nav className="px-2 py-3 space-y-1">
+                    <button 
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        activeTab === 'stats' 
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                      onClick={() => setActiveTab('stats')}
+                    >
+                      <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Dashboard
+                    </button>
                     
-                    {achievement.progress !== undefined && (
-                      <div className="w-full mt-2">
-                        <div className="bg-gray-200 rounded-full h-2 mt-1">
-                          <div 
-                            className="bg-green-500 h-2 rounded-full" 
-                            style={{ width: `${(achievement.progress / 5) * 100}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {achievement.progress}/5
+                    <button 
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        activeTab === 'devices' 
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                      onClick={() => setActiveTab('devices')}
+                    >
+                      <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      Devices
+                    </button>
+                    
+                    <button 
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        activeTab === 'tips' 
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                      onClick={() => setActiveTab('tips')}
+                    >
+                      <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      Tips
+                    </button>
+                    
+                    <button 
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        activeTab === 'profile' 
+                        ? 'bg-teal-50 text-teal-700'
+                        : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                      onClick={() => setActiveTab('profile')}
+                    >
+                      <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Profile
+                    </button>
+                  </nav>
+                </div>
+                <div className="border-t border-slate-200 px-4 py-4">
+                  <button 
+                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 shadow-sm"
+                    onClick={() => setShowCalculator(true)}
+                  >
+                    Calculate Footprint
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Main content area */}
+            <div className="flex-1">
+              {/* Error states */}
+              {deviceError && (
+                <ErrorMessage
+                  error={deviceError}
+                  onRetry={fetchDevices}
+                  className="mb-4"
+                />
+              )}
+              
+              {footprintError && (
+                <ErrorMessage
+                  error={footprintError}
+                  onRetry={fetchFootprints}
+                  className="mb-4"
+                />
+              )}
+              
+              {/* Dashboard area */}
+              {activeTab === 'stats' && (
+                <>
+                  {/* Show footprint errors if any */}
+                  {footprintError && (
+                    <div className="mb-6">
+                      <ErrorMessage 
+                        error={footprintError} 
+                        onRetry={fetchFootprints} 
+                      />
+                    </div>
+                  )}
+
+                  {/* Dashboard Stats Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    {/* Latest Footprint Card */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 -mt-8 -mr-8 bg-green-100 rounded-full"></div>
+                      <div className="relative">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Latest Footprint</h2>
+                        {latestFootprint ? (
+                          <div>
+                            <div className="text-3xl font-bold text-green-600 mb-2">
+                              {latestFootprint.total_co2e_kg} kg CO₂e
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {new Date(latestFootprint.created_at).toLocaleDateString()}
+                            </div>
+                            <button 
+                              onClick={() => setShowCalculator(true)}
+                              className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+                            >
+                              Calculate Again
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <p className="text-gray-500 mb-4">No footprint data yet. Calculate your first footprint!</p>
+                            <button 
+                              onClick={() => setShowCalculator(true)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+                            >
+                              Calculate Now
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Your Stats Card */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 -mt-8 -mr-8 bg-blue-100 rounded-full"></div>
+                      <div className="relative">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Stats</h2>
+                        <div className="space-y-4">
+                          <div>
+                            <div className="text-sm text-gray-500">Total Calculations</div>
+                            <div className="text-2xl font-bold text-gray-900">{userStats.totalCalculations}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">Average Footprint</div>
+                            <div className="text-2xl font-bold text-gray-900">{userStats.averageFootprint} kg CO₂e</div>
+                          </div>
                         </div>
                       </div>
-                    )}
+                    </div>
+                    
+                    {/* Tips Card with Carousel */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">Tips to Improve</h2>
+                      <TipsCarousel tips={tips} />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Room Filter */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-              {/* Room Selector */}
-              <div className="flex-grow">
-                <RoomSelector 
-                  availableRooms={availableRooms}
-                  selectedRooms={selectedRooms}
-                  onSelectRoom={handleRoomSelect}
-                />
-              </div>
-              
-              <div className="flex items-center">
-                <div className="relative">
-                  <button className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center justify-between min-w-[200px]">
-                    <span>January - February 2025</span>
-                    <svg className="h-5 w-5 text-gray-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {/* Date range dropdown - would be shown on click */}
-                </div>
-              </div>
-            </div>
-
-            {/* Selected Rooms Tags */}
-            <div className="flex flex-wrap gap-2 mt-4">
-              {selectedRooms.map(roomId => (
-                <div key={roomId} className="bg-green-50 text-green-800 px-3 py-1 rounded-full flex items-center border border-green-100">
-                  {getRoomName(roomId)}
-                  <button 
-                    onClick={() => handleRoomSelect(roomId)}
-                    className="ml-2 text-green-600 hover:text-green-800"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Show device errors if any */}
-          {deviceError && (
-            <div className="mb-6">
-              <ErrorMessage 
-                error={deviceError} 
-                onRetry={() => setDeviceError(null)} 
-              />
-            </div>
-          )}
-
-          {/* Totals Summary (only visible when devices are filtered) */}
-          {selectedRooms.length > 0 && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Filtered Summary</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col">
-                  <span className="text-sm text-gray-500">Total Energy</span>
-                  <span className="text-2xl font-bold text-gray-900">{totalEnergy} kWh</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm text-gray-500">CO₂ Emissions</span>
-                  <span className="text-2xl font-bold text-gray-900">{totalCO2} kg</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm text-gray-500">Estimated Cost</span>
-                  <span className="text-2xl font-bold text-gray-900">€{totalCost.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Devices by Room */}
-          {Object.keys(devicesByRoom).length > 0 ? (
-            Object.entries(devicesByRoom).map(([roomId, roomDevices]) => (
-              <div key={roomId} className="mb-8">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 pl-1">{getRoomName(roomId)} devices</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {roomDevices.map(device => (
-                    <DeviceStatsCard
-                      key={device.id}
-                      id={device.id}
-                      name={device.name}
-                      brand={device.brand}
-                      image={device.image}
-                      energy_kwh={device.energy_kwh}
-                      co2_kg={device.co2_kg}
-                      usage_time={device.usage_time}
-                      cost_estimate={device.cost_estimate}
-                      isOn={device.isOn || false}
-                      onToggle={(id, newStatus) => toggleDeviceStatus(id, newStatus)}
-                      onShowMenu={handleShowDeviceMenu}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center">
-              <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No devices found</h3>
-              <p className="text-gray-500 mb-4">Add your first device to start tracking energy usage</p>
-              <button
-                onClick={() => setShowAddDeviceModal(true)}
-                className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add device
-              </button>
-            </div>
-          )}
-
-          {/* Premium Upgrade Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800">Plus</h2>
-                  <div className="flex items-center mt-1">
-                    <span className="text-xl font-bold">€29</span>
-                    <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded-md">25% Discount</span>
+                  
+                  {/* Achievements Section */}
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">Achievements</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {achievements.map(achievement => (
+                        <div 
+                          key={achievement.id} 
+                          className={`p-4 rounded-lg border ${achievement.earned 
+                            ? 'border-green-200 bg-green-50' 
+                            : 'border-gray-200 bg-gray-50 opacity-60'}`}
+                        >
+                          <div className="flex flex-col items-center text-center">
+                            <div className="text-4xl mb-2">{achievement.icon}</div>
+                            <div className="font-medium text-gray-900">{achievement.name}</div>
+                            <div className="text-sm text-gray-500">{achievement.description}</div>
+                            
+                            {achievement.progress !== undefined && (
+                              <div className="w-full mt-2">
+                                <div className="bg-gray-200 rounded-full h-2 mt-1">
+                                  <div 
+                                    className="bg-green-500 h-2 rounded-full" 
+                                    style={{ width: `${(achievement.progress / 5) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {achievement.progress}/5
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-gray-500 mt-2">per user/month, billed annually</p>
-                </div>
-                <button 
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition w-full md:w-auto"
-                  onClick={handleUpgradeClick}
-                >
-                  Upgrade to Plus
-                </button>
-              </div>
-              
-              <div className="mt-4">
-                <h3 className="font-medium text-gray-800 mb-2">Unlock features</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-700">Saving recommendations</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-700">Device comparison</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-700">Mobile version</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
-          {/* User Profile */}
-          <UserProfile user={user} onLogout={onLogout} />
+                  {/* Room Filter */}
+                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                      {/* Room Selector */}
+                      <div className="flex-grow">
+                        <RoomSelector 
+                          availableRooms={availableRooms}
+                          selectedRooms={selectedRooms}
+                          onSelectRoom={handleRoomSelect}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="relative">
+                          <button className="bg-white px-4 py-2 rounded-md border border-gray-200 shadow-sm flex items-center justify-between min-w-[200px]">
+                            <span>January - February 2025</span>
+                            <svg className="h-5 w-5 text-gray-500 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {/* Date range dropdown - would be shown on click */}
+                        </div>
+                      </div>
+                    </div>
 
-          {/* Add Device Modal */}
-          {showAddDeviceModal && (
-            <AddDeviceModal
-              isOpen={showAddDeviceModal}
-              onClose={() => setShowAddDeviceModal(false)}
-              onDeviceAdded={handleDeviceAdded}
-              userId={user.id}
-            />
-          )}
+                    {/* Selected Rooms Tags */}
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {selectedRooms.map(roomId => (
+                        <div key={roomId} className="bg-green-50 text-green-800 px-3 py-1 rounded-full flex items-center border border-green-100">
+                          {getRoomName(roomId)}
+                          <button 
+                            onClick={() => handleRoomSelect(roomId)}
+                            className="ml-2 text-green-600 hover:text-green-800"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-          {/* Device Context Menu */}
-          {showDeviceMenu && activeDeviceId && (
-            <div className="fixed inset-0 z-50 overflow-y-auto" onClick={() => setShowDeviceMenu(false)}>
-              <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true"></div>
-              <div className="relative bg-white w-56 rounded-lg shadow-lg border border-gray-200 p-1 ml-auto mr-4 mt-24">
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Handle rename logic
-                    setShowDeviceMenu(false);
-                  }}
-                >
-                  <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  Rename item
-                </button>
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Handle image change logic
-                    setShowDeviceMenu(false);
-                  }}
-                >
-                  <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Change image
-                </button>
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Handle hide device logic
-                    setShowDeviceMenu(false);
-                  }}
-                >
-                  <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7A9.97 9.97 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.43 3.27m-3.42-3.42a3 3 0 10-4.24 4.24m4.24-4.24l-4.24 4.24M9.879 16.121L12 14m4.242-4.242L12 14" />
-                  </svg>
-                  Hide device
-                </button>
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Handle view report logic
-                    setShowDeviceMenu(false);
-                  }}
-                >
-                  <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  View report
-                </button>
-                <div className="border-t border-gray-200 my-1"></div>
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-red-50 rounded flex items-center text-red-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm("Are you sure you want to delete this device?")) {
-                      deleteDevice(activeDeviceId);
-                    } else {
-                      setShowDeviceMenu(false);
-                    }
-                  }}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </>
+                  {/* Totals Summary (only visible when devices are filtered) */}
+                  {selectedRooms.length > 0 && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">Filtered Summary</h2>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500">Total Energy</span>
+                          <span className="text-2xl font-bold text-gray-900">{totalEnergy} kWh</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500">CO₂ Emissions</span>
+                          <span className="text-2xl font-bold text-gray-900">{totalCO2} kg</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500">Estimated Cost</span>
+                          <span className="text-2xl font-bold text-gray-900">€{totalCost.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </button>
-              </div>
+
+                  {/* Devices by Room */}
+                  {Object.keys(devicesByRoom).length > 0 ? (
+                    Object.entries(devicesByRoom).map(([roomId, roomDevices]) => (
+                      <div key={roomId} className="mb-8">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 pl-1">{getRoomName(roomId)} devices</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {roomDevices.map(device => (
+                            <DeviceStatsCard
+                              key={device.id}
+                              id={device.id}
+                              name={device.name}
+                              brand={device.brand}
+                              image={device.image}
+                              energy_kwh={device.energy_kwh}
+                              co2_kg={device.co2_kg}
+                              usage_time={device.usage_time}
+                              cost_estimate={device.cost_estimate}
+                              isOn={device.isOn || false}
+                              onToggle={(id, newStatus) => toggleDeviceStatus(id, newStatus)}
+                              onShowMenu={handleShowDeviceMenu}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center">
+                      <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No devices found</h3>
+                      <p className="text-gray-500 mb-4">Add your first device to start tracking energy usage</p>
+                      <button
+                        onClick={() => setShowAddDeviceModal(true)}
+                        className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add device
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Premium Upgrade Card */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                    <div className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-800">Plus</h2>
+                          <div className="flex items-center mt-1">
+                            <span className="text-xl font-bold">€29</span>
+                            <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded-md">25% Discount</span>
+                          </div>
+                          <p className="text-gray-500 mt-2">per user/month, billed annually</p>
+                        </div>
+                        <button 
+                          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition w-full md:w-auto"
+                          onClick={handleUpgradeClick}
+                        >
+                          Upgrade to Plus
+                        </button>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <h3 className="font-medium text-gray-800 mb-2">Unlock features</h3>
+                        <ul className="space-y-2">
+                          <li className="flex items-center">
+                            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-gray-700">Saving recommendations</span>
+                          </li>
+                          <li className="flex items-center">
+                            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-gray-700">Device comparison</span>
+                          </li>
+                          <li className="flex items-center">
+                            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-gray-700">Mobile version</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* User Profile */}
+                  <UserProfile user={user} onLogout={onLogout} />
+
+                  {/* Device Context Menu */}
+                  {showDeviceMenu && activeDeviceId && (
+                    <div className="fixed inset-0 z-50 overflow-y-auto" onClick={() => setShowDeviceMenu(false)}>
+                      <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true"></div>
+                      <div className="relative bg-white w-56 rounded-lg shadow-lg border border-gray-200 p-1 ml-auto mr-4 mt-24">
+                        <button 
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle rename logic
+                            setShowDeviceMenu(false);
+                          }}
+                        >
+                          <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Rename item
+                        </button>
+                        <button 
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle image change logic
+                            setShowDeviceMenu(false);
+                          }}
+                        >
+                          <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          Change image
+                        </button>
+                        <button 
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle hide device logic
+                            setShowDeviceMenu(false);
+                          }}
+                        >
+                          <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7A9.97 9.97 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.43 3.27m-3.42-3.42a3 3 0 10-4.24 4.24m4.24-4.24l-4.24 4.24M9.879 16.121L12 14m4.242-4.242L12 14" />
+                          </svg>
+                          Hide device
+                        </button>
+                        <button 
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded flex items-center text-gray-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle view report logic
+                            setShowDeviceMenu(false);
+                          }}
+                        >
+                          <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          View report
+                        </button>
+                        <div className="border-t border-gray-200 my-1"></div>
+                        <button 
+                          className="w-full text-left px-4 py-2 hover:bg-red-50 rounded flex items-center text-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Are you sure you want to delete this device?")) {
+                              deleteDevice(activeDeviceId);
+                            } else {
+                              setShowDeviceMenu(false);
+                            }
+                          }}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === 'devices' && (
+                // Implement devices tab content
+                <div>Devices tab content</div>
+              )}
+
+              {activeTab === 'tips' && (
+                // Implement tips tab content
+                <div>Tips tab content</div>
+              )}
+
+              {activeTab === 'profile' && (
+                // Implement profile tab content
+                <div>Profile tab content</div>
+              )}
             </div>
-          )}
-        </main>
+          </div>
+        </div>
       </div>
     </ErrorBoundary>
   );

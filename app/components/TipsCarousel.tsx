@@ -34,14 +34,14 @@ const TipsCarousel: React.FC<TipsCarouselProps> = ({ tips }) => {
         >
           <div className="flex items-start mb-3">
             <div className="flex-shrink-0 mr-3">
-              <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
             </div>
             <div>
-              <p className="text-gray-700">{tips[currentTipIndex]}</p>
+              <p className="text-slate-700">{tips[currentTipIndex]}</p>
             </div>
           </div>
         </div>
@@ -54,7 +54,7 @@ const TipsCarousel: React.FC<TipsCarouselProps> = ({ tips }) => {
             <div 
               key={index} 
               className={`h-1.5 w-6 rounded-full transition-all duration-300 ${
-                index === currentTipIndex ? 'bg-green-500 w-8' : 'bg-gray-300'
+                index === currentTipIndex ? 'bg-teal-500 w-8' : 'bg-slate-300'
               }`}
             />
           ))}

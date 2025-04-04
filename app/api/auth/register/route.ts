@@ -10,8 +10,8 @@ import type { NextRequest } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get the request body (email, password)
-    const { email, password, name } = await request.json();
+    // Get the request body
+    const { email, password, name, username } = await request.json();
     
     // Validate the input
     if (!email || !password) {
@@ -21,8 +21,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create a Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Create a Supabase client with proper cookie handling
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore 
+    });
     
     // Register the user
     const { data, error } = await supabase.auth.signUp({
@@ -30,7 +33,8 @@ export async function POST(request: NextRequest) {
       password,
       options: {
         data: {
-          name,
+          full_name: name || '',
+          username: username || '',
         },
       },
     });
@@ -42,10 +46,33 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Create user profile if registration was successful
+    if (data.user) {
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            name: name || '',
+            username: username || '',
+            language: 'en',
+            country: 'global',
+          });
+        
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+        }
+      } catch (profileError) {
+        console.error('Failed to create user profile:', profileError);
+      }
+    }
+    
     // Return success response
     return NextResponse.json({
       message: 'Registration successful',
       user: data.user,
+      confirmed: !data.user?.identities?.[0]?.identity_data?.email_verified,
     });
   } catch (error) {
     console.error('Registration error:', error);

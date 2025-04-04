@@ -26,43 +26,92 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize the Supabase client just once to avoid multiple instances
   useEffect(() => {
-    // Clear any corrupted local storage or cookies
-    try {
-      if (typeof window !== 'undefined') {
-        if (window.localStorage.getItem('supabase.auth.token') === 'undefined') {
-          window.localStorage.removeItem('supabase.auth.token');
+    let isMounted = true;
+    
+    const cleanupLocalStorage = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          // Cleanup for old token format
+          if (window.localStorage.getItem('supabase.auth.token') === 'undefined') {
+            window.localStorage.removeItem('supabase.auth.token');
+          }
+          
+          // Additional cleanup for potentially corrupted items
+          const localStorageKeys = Object.keys(window.localStorage);
+          for (const key of localStorageKeys) {
+            if (key.startsWith('supabase.auth.')) {
+              try {
+                const value = window.localStorage.getItem(key);
+                if (value && (value === 'undefined' || value === 'null' || value.startsWith('b'))) {
+                  console.log('Removing corrupted localStorage item:', key);
+                  window.localStorage.removeItem(key);
+                }
+              } catch (err) {
+                console.error('Error parsing localStorage item:', key, err);
+                window.localStorage.removeItem(key);
+              }
+            }
+          }
+          
+          // Also clear any corrupted cookies by setting them to expire
+          document.cookie.split(';').forEach(cookie => {
+            const [name] = cookie.trim().split('=');
+            if (name && name.includes('supabase')) {
+              document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            }
+          });
         }
+      } catch (e) {
+        console.error('Error cleaning up storage:', e);
       }
-    } catch (e) {
-      console.error('Error cleaning up localStorage:', e);
-    }
+    };
+    
+    // Clean storage before initialization
+    cleanupLocalStorage();
 
     // Create the supabase browser client
-    const client = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
-    setSupabase(client);
+    try {
+      if (isMounted) {
+        const client = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        setSupabase(client);
+      }
+    } catch (error) {
+      console.error('Error creating Supabase client:', error);
+    }
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Get session and set up auth listener once supabase client is available
   useEffect(() => {
+    let isMounted = true;
+    
     if (!supabase) return;
 
     // Get initial session
     const getSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
+        if (isMounted) {
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        }
       } catch (error) {
         console.error('Error getting session:', error);
         // Reset state on error
-        setSession(null);
-        setUser(null);
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     getSession();
@@ -70,9 +119,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event: string, newSession: Session | null) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setIsLoading(false);
+        if (isMounted) {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          setIsLoading(false);
+        }
       }
     );
 
@@ -80,6 +131,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (authListener?.subscription) {
         authListener.subscription.unsubscribe();
       }
+      isMounted = false;
     };
   }, [supabase]);
 
@@ -89,13 +141,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
       // Clear any local storage data that might be persisting the session
       if (typeof window !== 'undefined') {
-        window.localStorage.removeItem('supabase.auth.token');
+        // Remove all supabase auth related items to ensure clean state
+        const localStorageKeys = Object.keys(window.localStorage);
+        for (const key of localStorageKeys) {
+          if (key.startsWith('supabase.auth.')) {
+            window.localStorage.removeItem(key);
+          }
+        }
+        
+        // Also clear any auth cookies
+        document.cookie.split(';').forEach(cookie => {
+          const [name] = cookie.trim().split('=');
+          if (name && name.includes('supabase')) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          }
+        });
       }
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
+  // Use a simple React element to prevent any list rendering issues
   return (
     <UserContext.Provider value={{ session, user, isLoading, signOut }}>
       {children}
