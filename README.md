@@ -32,8 +32,8 @@ EcoTrack is a comprehensive carbon footprint monitoring application that helps u
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourname/ecotrack.git
-   cd ecotrack
+   git clone https://github.com/robertpreshyl/EcoTrack-WebApp.git
+   cd EcoTrack-WebApp
    ```
 
 2. Install dependencies:
