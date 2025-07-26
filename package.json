@@ -12,7 +12,7 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
-    "chart.js": "^4.4.1",
+    "chart.js": "^4.5.0",
     "dotenv": "^16.4.7",
     "framer-motion": "^12.6.3",
     "next": "15.2.4",
