@@ -40,3 +40,7 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+*.sql
+*.dump
+*.key
+__pycache__/
